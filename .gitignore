@@ -1,0 +1,12 @@
+# build artifacts
+/dpsk_capture
+/src/*.o
+
+# captured conversation data (do not commit real sessions)
+/captures/
+/v2/
+/experiment_report.json
+
+# python caches
+/__pycache__/
+*.pyc
