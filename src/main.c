@@ -10,11 +10,9 @@
 #include "http.h"
 
 #define DEFAULT_OUT "./v2"
-#define DEFAULT_COUNT 0
 
 int main(int argc, char **argv) {
     const char *out = argc > 1 ? argv[1] : DEFAULT_OUT;
-    size_t count = argc > 2 ? (size_t)strtoul(argv[2], NULL, 10) : DEFAULT_COUNT;
 
     dpsk_auth_t auth;
     if (dpsk_auth_load(&auth) != 0) {
@@ -27,7 +25,7 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    int rc = dpsk_capture_sessions("https://chat.deepseek.com", &auth, out, count);
+    int rc = dpsk_capture_forest("https://chat.deepseek.com", &auth, out);
     dpsk_http_cleanup();
     dpsk_auth_free(&auth);
     return rc == 0 ? 0 : 1;

@@ -620,19 +620,16 @@ static int seen_add(char ***seen_ptr, size_t *seen_count, size_t *seen_cap,
     return 0;
 }
 
-int dpsk_capture_sessions(const char *base_url,
-                         const dpsk_auth_t *auth,
-                         const char *out_root,
-                         size_t session_count) {
+int dpsk_capture_forest(const char *base_url,
+                       const dpsk_auth_t *auth,
+                       const char *out_root) {
     (void)base_url;
     if (mkdir_p(out_root) != 0) return -1;
 
     size_t total = 0;
     cJSON *sessions = fetch_all_sessions(auth, &total);
     if (!sessions) return -1;
-
-    size_t take = session_count == 0 ? total : (session_count < total ? session_count : total);
-    if (take == 0) {
+    if (total == 0) {
         cJSON_Delete(sessions);
         return -1;
     }
@@ -642,7 +639,14 @@ int dpsk_capture_sessions(const char *base_url,
     size_t seen_cap = 0;
 
     cJSON *report = cJSON_CreateArray();
-    for (size_t i = 0; i < take; i++) {
+    cJSON *forest = cJSON_CreateObject();
+    cJSON *forest_sessions = cJSON_CreateArray();
+    cJSON *forest_paths = cJSON_CreateArray();
+    size_t captured_sessions = 0;
+    size_t total_messages = 0;
+    size_t total_paths = 0;
+
+    for (size_t i = 0; i < total; i++) {
         cJSON *sess = cJSON_GetArrayItem(sessions, (int)i);
         const char *sid = json_string_default(sess, "id", "");
         const char *list_title = json_string_default(sess, "title", "");
@@ -676,6 +680,37 @@ int dpsk_capture_sessions(const char *base_url,
         snprintf(dir, sizeof(dir), "%s/%s", out_root, digest);
         int export_ok = export_messages(&cap, dir) == 0 && export_tree(&cap, dir) == 0;
 
+        cJSON *session_entry = cJSON_CreateObject();
+        cJSON_AddStringToObject(session_entry, "session_id", sid);
+        cJSON_AddStringToObject(session_entry, "title", cap.title ? cap.title : list_title);
+        cJSON_AddStringToObject(session_entry, "root_key", cap.root_key);
+        cJSON_AddStringToObject(session_entry, "uri", cap.uri);
+        cJSON_AddNumberToObject(session_entry, "message_count", (double)cap.msg_count);
+        cJSON_AddNumberToObject(session_entry, "root_count", (double)cap.root_count);
+        cJSON_AddNumberToObject(session_entry, "leaf_count", (double)cap.leaf_count);
+        cJSON_AddNumberToObject(session_entry, "branch_point_count", (double)cap.branch_count);
+        cJSON_AddNumberToObject(session_entry, "path_count", (double)cap.path_count);
+        cJSON_AddItemToObject(session_entry, "paths", paths_json(&cap));
+        cJSON_AddItemToArray(forest_sessions, session_entry);
+
+        for (size_t p = 0; p < cap.path_count; p++) {
+            cJSON *path = cJSON_CreateObject();
+            cJSON_AddNumberToObject(path, "path_id", (double)total_paths);
+            cJSON_AddStringToObject(path, "session_id", sid);
+            cJSON_AddStringToObject(path, "root_key", cap.root_key);
+            cJSON_AddNumberToObject(path, "local_path_no", (double)p);
+            cJSON *ids = cJSON_CreateArray();
+            for (size_t d = 0; d < cap.path_lens[p]; d++) {
+                cJSON_AddItemToArray(ids, cJSON_CreateNumber((double)cap.msgs[cap.paths[p][d]].message_id));
+            }
+            cJSON_AddItemToObject(path, "message_ids", ids);
+            cJSON_AddItemToArray(forest_paths, path);
+            total_paths++;
+        }
+
+        captured_sessions++;
+        total_messages += cap.msg_count;
+
         cJSON *sum = cJSON_CreateObject();
         cJSON_AddStringToObject(sum, "session_id", sid);
         cJSON_AddStringToObject(sum, "title", cap.title ? cap.title : list_title);
@@ -706,8 +741,30 @@ int dpsk_capture_sessions(const char *base_url,
         }
         fclose(fp);
     }
+
+    cJSON_AddStringToObject(forest, "backup_root", out_root);
+    cJSON_AddNumberToObject(forest, "session_count", (double)captured_sessions);
+    cJSON_AddNumberToObject(forest, "total_messages", (double)total_messages);
+    cJSON_AddNumberToObject(forest, "total_paths", (double)total_paths);
+    cJSON_AddItemToObject(forest, "sessions", forest_sessions);
+    cJSON_AddItemToObject(forest, "paths", forest_paths);
+
+    char forest_path[PATH_MAX + 32];
+    snprintf(forest_path, sizeof(forest_path), "%s/forest.json", out_root);
+    FILE *ffp = fopen(forest_path, "wb");
+    if (ffp) {
+        char *json = cJSON_Print(forest);
+        if (json) {
+            fputs(json, ffp);
+            fputc('\n', ffp);
+            free(json);
+        }
+        fclose(ffp);
+    }
+
     for (size_t j = 0; j < seen_count; j++) free(seen[j]);
     free(seen);
+    cJSON_Delete(forest);
     cJSON_Delete(report);
     cJSON_Delete(sessions);
     return 0;

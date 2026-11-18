@@ -12,11 +12,13 @@ branch path, and writes per-session JSON output.
 Each session is written to:
 
 ```text
+v2/forest.json
 v2/<sha256(uri)>/tree.json
 v2/<sha256(uri)>/messages.jsonl
 v2/capture_report.json
 ```
 
+- `forest.json`: full-session forest, global path IDs, and per-session path lists
 - `messages.jsonl`: one complete message per line, including original fragments
 - `tree.json`: nodes, edges, roots, leaves, branch points, and all branch paths
 - `capture_report.json`: one summary entry per captured session
@@ -34,11 +36,10 @@ On non-Nix systems, point `pkg-config` at the four dependencies.
 ## Run
 
 ```bash
-nix-shell -p curl sqlite cjson openssl --run './dpsk_capture [OUT_DIR] [COUNT]'
+nix-shell -p curl sqlite cjson openssl --run './dpsk_capture [OUT_DIR]'
 ```
 
-- `COUNT=0` (default) captures all sessions
-- A positive `COUNT` captures only the first N sessions
+- Export is always the complete session forest; there is no partial-count mode.
 - The default output directory is `./v2`
 
 ## Firefox profile

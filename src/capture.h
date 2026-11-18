@@ -5,9 +5,8 @@
 
 #include "auth.h"
 
-int dpsk_capture_sessions(const char *base_url,
-                            const dpsk_auth_t *auth,
-                            const char *out_root,
-                            size_t session_count);
+int dpsk_capture_forest(const char *base_url,
+                        const dpsk_auth_t *auth,
+                        const char *out_root);
 
 #endif
