@@ -27,6 +27,14 @@ v2/capture_report.json
 
 Uses `libcurl`, `sqlite3`, `cJSON`, and OpenSSL.
 
+On Nix:
+
+```bash
+nix develop --command sh -c 'make clean && make'
+```
+
+Without flakes:
+
 ```bash
 nix-shell -p curl sqlite cjson openssl pkg-config --run 'make clean && make'
 ```
