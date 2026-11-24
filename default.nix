@@ -20,6 +20,7 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     install -Dm755 dpsk_capture $out/bin/dpsk_capture
+    install -Dm755 grok_ui_agent $out/bin/grok_ui_agent
     runHook postInstall
   '';
 

@@ -31,18 +31,25 @@ SRC := src/auth.c src/http.c src/capture.c src/main.c
 OBJ := $(SRC:.c=.o)
 TARGET := dpsk_capture
 
+GROK_SRC := src/grok_ui.c src/grok_agent.c
+GROK_OBJ := $(GROK_SRC:.c=.o)
+GROK_TARGET := grok_ui_agent
+
 .PHONY: all clean run
 
-all: $(TARGET)
+all: $(TARGET) $(GROK_TARGET)
 
 $(TARGET): $(OBJ)
 	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
+
+$(GROK_TARGET): $(GROK_OBJ)
+	$(CC) -o $@ $(GROK_OBJ)
 
 src/%.o: src/%.c src/*.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f $(OBJ) $(GROK_OBJ) $(TARGET) $(GROK_TARGET)
 
 run: $(TARGET)
 	./$(TARGET)

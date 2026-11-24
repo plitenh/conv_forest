@@ -70,6 +70,33 @@ cookies.sqlite
 `cookies.sqlite`. Both SQLite files are copied to a temporary directory first
 to avoid Firefox write locks.
 
+## Grok UI agent
+
+`grok_ui_agent` is a small OCR/uinput boundary for `grok.com` when a direct
+login/API path is blocked by a challenge.
+
+```bash
+./grok_ui_agent capture SLOT PNG
+./grok_ui_agent ocr PNG
+./grok_ui_agent probe SLOT PNG
+./grok_ui_agent click SLOT X Y
+./grok_ui_agent type TEXT
+./grok_ui_agent key KEY
+```
+
+Runtime tools: `grim`, `tesseract`, `ydotool`/`ydotoold`.
+
+The default screen is `2560x1440` and slots `7`, `8`, `9` are treated as
+workspaces. Override regions with:
+
+```bash
+GROK_UI_SCREEN_W=2560
+GROK_UI_SCREEN_H=1440
+GROK_UI_SLOT_7=0,0,2560,1440
+GROK_UI_SLOT_8=0,0,2560,1440
+GROK_UI_SLOT_9=0,0,2560,1440
+```
+
 ## Current scope
 
 The current adapter is DeepSeek web. The model and export format are intended

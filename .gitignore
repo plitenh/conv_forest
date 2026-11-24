@@ -1,5 +1,6 @@
 # build artifacts
 /dpsk_capture
+/grok_ui_agent
 /src/*.o
 
 # captured conversation data (do not commit real sessions)
